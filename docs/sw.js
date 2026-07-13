@@ -1,5 +1,5 @@
 const CACHE_PREFIX = "mojmic-static-";
-const CACHE = `${CACHE_PREFIX}v1`;
+const CACHE = `${CACHE_PREFIX}v2`;
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -30,7 +30,10 @@ self.addEventListener("activate", (event) => {
     const keys = await caches.keys();
     await Promise.all(
       keys
-        .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE)
+        .filter((key) => (
+          key !== CACHE
+          && (key.startsWith(CACHE_PREFIX) || key.startsWith("local-transcriber-shell-"))
+        ))
         .map((key) => caches.delete(key)),
     );
     await self.clients.claim();
