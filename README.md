@@ -1,68 +1,74 @@
 # MojiMic
 
-音声を外部サーバーへ送らず、ブラウザ内で文字起こしするPWAです。音声ファイルとマイクのライブ入力に対応し、AndroidとWindowsで利用できます。
+AndroidとWindowsで使える、ブラウザ内文字起こしPWAです。ビルド不要のHTML・CSS・JavaScriptだけで動きます。
 
-公開版: https://offline-voice-transcriber.xenoah.chatgpt.site
+GitHub Pages: https://xenoah.github.io/moji-mic/
 
-GitHub Pages版: https://xenoah.github.io/moji-mic/
+## 機能
 
-## 主な機能
-
-- 音声ファイルの読み込みと文字起こし
+- 音声ファイルの文字起こし
 - マイクからのライブ文字起こし
-- 言語の自動判定と99言語の手動選択
-- 軽量・標準・高精度の3種類のWhisperモデル
-- WebGPU優先、利用できない環境ではWASMへ自動切り替え
-- 文字起こし結果を区間ごとに自動保存
-- ブラウザ内のIndexedDBと端末内領域（OPFS）への二重保存
-- 保存履歴の再表示、本文編集、区間再生、テキスト書き出し
-- PWAとしてホーム画面やデスクトップへインストール可能
+- 自動判定と99言語の手動選択
+- 軽量・標準・高精度のWhisperモデル
+- WebGPUを優先し、使えない場合はWASMへ自動切り替え
+- 認識区間ごとにIndexedDBとOPFSへ自動保存
+- 保存履歴の再表示・本文編集・区間再生
+- TXT・SRT・JSONの書き出しとコピー
+- PWAとしてホーム画面へインストール
 
-## オフライン動作について
+## 使い方
 
-初回だけ、アプリ本体と選択したAIモデルのダウンロードにインターネット接続が必要です。準備完了後はブラウザのキャッシュから読み込み、オフラインで文字起こしできます。
+1. GitHub Pages版を開きます。
+2. 初回はオンラインで「モデル準備」を押します。
+3. 「音声ファイル」または「マイク・ライブ」を選びます。
+4. 準備後は、同じブラウザでオフライン文字起こしができます。
 
-音声データと文字起こし本文は文字起こし処理のために外部へ送信されません。保存内容は使用中のブラウザプロファイルに残るため、サイトデータを削除すると履歴も消えます。重要な結果はテキストとして書き出してください。
+初回のAIエンジンとモデルの取得にだけ通信を使います。音声データと文字起こし本文は外部サーバーへ送信しません。サイトデータを削除すると履歴も消えるため、重要な結果は書き出してください。
 
 ## 対応環境
 
 - Android: 最新版Google Chrome
 - Windows: 最新版Microsoft EdgeまたはGoogle Chrome
 
-マイク入力にはHTTPSまたはlocalhostが必要です。端末の性能、選択したモデル、音声の長さによって処理速度とメモリ使用量が変わります。
+マイクとPWAにはHTTPSまたはlocalhostが必要です。端末の性能やモデルによって、処理速度と必要容量が変わります。
 
-## ローカル起動
+## ビルド不要の構成
 
-Node.js 22.13以降が必要です。
+`docs/` がそのままアプリ本体です。`npm install`、フレームワーク、GitHub Actionsは必要ありません。
 
-```bash
-npm ci
-npm run dev
+```text
+docs/
+├── index.html
+├── styles.css
+├── app.js
+├── transcriber.worker.js
+├── sw.js
+├── manifest.webmanifest
+└── vendor/transformers.min.js.gz
 ```
 
-表示されたlocalhostのURLをブラウザで開いてください。
-
-## 確認コマンド
+ローカルで確認するときは、ビルドせず簡易サーバーで開けます。
 
 ```bash
-npm run lint
-npm test
-npm run build:pages
+cd docs
+python -m http.server 8000
 ```
 
-`npm test` は本番用ビルド、成果物検証、レンダリングテストを実行します。
-`npm run build:pages` は `/moji-mic/` 配下で動く静的サイトを生成し、検証済み成果物を `docs/` へ配置します。
+その後 `http://localhost:8000` を開いてください。`file://` で直接開くと、ワーカーやマイクは動きません。
 
 ## GitHub Pagesへの公開
 
-GitHub Pagesは、リポジトリに同梱した完成済みの `docs/` をそのまま配信します。GitHub Actionsやサーバー上でのビルドは不要です。
+リポジトリの **Settings → Pages** で次のように設定します。
 
-初回だけリポジトリの **Settings → Pages** で公開元を **Deploy from a branch**、ブランチを **main**、フォルダーを **/docs** に設定してください。ソースを変更した場合は、ローカルで `npm run build:pages` を実行して更新された `docs/` もコミットします。
+- Source: **Deploy from a branch**
+- Branch: **main**
+- Folder: **/docs**
 
-## 技術構成
+これだけで `docs/` のHTML・CSS・JavaScriptがそのまま公開されます。
 
-- Next.js / React / TypeScript
-- Vite / Vinext / Cloudflare Workers
-- Transformers.js
-- Whisper ONNXモデル
-- IndexedDB / OPFS / Service Worker
+## 主な技術
+
+- HTML / CSS / Vanilla JavaScript
+- Transformers.js / Whisper ONNX
+- Web Worker / Service Worker
+- IndexedDB / OPFS / Cache API
