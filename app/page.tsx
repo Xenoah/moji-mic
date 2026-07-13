@@ -43,6 +43,7 @@ const DB_VERSION = 1;
 const STORE_NAME = "sessions";
 const CHUNK_SECONDS = 20;
 const LIVE_CHUNK_SECONDS = 5;
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
 const MODELS = [
   { id: "onnx-community/whisper-tiny", name: "軽量", note: "Android向け・高速" },
@@ -393,7 +394,11 @@ export default function Home() {
       setSupportsPicker("showSaveFilePicker" in window);
     }, 0);
     navigator.storage?.persist?.().catch(() => false);
-    if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register(`${BASE_PATH}/sw.js`, { scope: `${BASE_PATH}/` })
+        .catch(() => undefined);
+    }
     const handleOnline = () => setOnline(true);
     const handleOffline = () => setOnline(false);
     window.addEventListener("online", handleOnline);

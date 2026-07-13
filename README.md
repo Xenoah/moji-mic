@@ -4,6 +4,8 @@
 
 公開版: https://offline-voice-transcriber.xenoah.chatgpt.site
 
+GitHub Pages版: https://xenoah.github.io/moji-mic/
+
 ## 主な機能
 
 - 音声ファイルの読み込みと文字起こし
@@ -45,9 +47,17 @@ npm run dev
 ```bash
 npm run lint
 npm test
+npm run build:pages
 ```
 
 `npm test` は本番用ビルド、成果物検証、レンダリングテストを実行します。
+`npm run build:pages` は `/moji-mic/` 配下で動く静的サイトを生成し、検証済み成果物を `docs/` へ配置します。
+
+## GitHub Pagesへの公開
+
+GitHub Pagesは、リポジトリに同梱した完成済みの `docs/` をそのまま配信します。GitHub Actionsやサーバー上でのビルドは不要です。
+
+初回だけリポジトリの **Settings → Pages** で公開元を **Deploy from a branch**、ブランチを **main**、フォルダーを **/docs** に設定してください。ソースを変更した場合は、ローカルで `npm run build:pages` を実行して更新された `docs/` もコミットします。
 
 ## 技術構成
 

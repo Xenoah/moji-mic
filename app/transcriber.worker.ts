@@ -3,13 +3,26 @@
 import { env, pipeline } from "@huggingface/transformers";
 
 type Device = "webgpu" | "wasm";
-type Pipeline = Awaited<ReturnType<typeof pipeline>>;
 type AsrResult = { text?: string; chunks?: Array<{ text: string; timestamp: [number, number] }> };
+type AsrPipeline = (
+  input: Float32Array,
+  options: Record<string, unknown>,
+) => Promise<AsrResult | AsrResult[]>;
+type CreatePipeline = (
+  task: string,
+  model: string,
+  options: Record<string, unknown>,
+) => Promise<AsrPipeline>;
 
-const pipelines = new Map<string, Pipeline>();
+const pipelines = new Map<string, AsrPipeline>();
+const createPipeline = pipeline as unknown as CreatePipeline;
 
 env.useBrowserCache = true;
 env.allowRemoteModels = true;
+if (env.backends.onnx.wasm) {
+  env.backends.onnx.wasm.wasmPaths =
+    "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/";
+}
 
 function post(message: unknown) {
   self.postMessage(message);
@@ -20,7 +33,7 @@ async function getPipeline(model: string, device: Device) {
   const cached = pipelines.get(key);
   if (cached) return { instance: cached, loaded: false };
   post({ type: "log", message: `${device.toUpperCase()}で ${model.split("/").pop()} を準備中` });
-  const instance = await pipeline("automatic-speech-recognition", model, {
+  const instance = await createPipeline("automatic-speech-recognition", model, {
     device,
     dtype: device === "webgpu"
       ? { encoder_model: "fp32", decoder_model_merged: "q4" }
@@ -47,8 +60,7 @@ self.addEventListener("message", async (event: MessageEvent) => {
     if (loaded || type === "load") post({ type: "ready", model, device });
     if (type === "load") return;
     if (type !== "transcribe") return;
-    const run = transcriber as unknown as (input: Float32Array, options: Record<string, unknown>) => Promise<AsrResult | AsrResult[]>;
-    const result = await run(audio, {
+    const result = await transcriber(audio, {
       task: "transcribe",
       language: language ?? undefined,
       return_timestamps: true,
